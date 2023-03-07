@@ -5,5 +5,9 @@
     "rootDir": "./src"
   },
   "include": ["./src/"],
-  "references": []
+  "references": [
+    { "path": "../../xplat-api" },
+    { "path": "../../sync-reference/p2p" },
+    { "path": "../../rx-tbl" }
+  ]
 }

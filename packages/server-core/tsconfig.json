@@ -7,7 +7,7 @@
   },
   "include": ["./src/"],
   "references": [
-    { "path": "../../node-allinone" },
+    { "path": "../node-allinone" },
     { "path": "../client-server-common" }
   ]
 }

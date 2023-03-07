@@ -1,5 +1,5 @@
 {
-  "name": "@vlcn.io/wa-crsqlite",
+  "name": "@vlcn.io/crsqlite-wasm",
   "type": "module",
   "version": "0.8.0",
   "files": [

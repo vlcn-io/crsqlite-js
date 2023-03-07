@@ -12,7 +12,7 @@
     "deep-clean": "rm -rf ./dist || true && rm tsconfig.tsbuildinfo || true"
   },
   "dependencies": {
-    "@vlcn.io/wa-crsqlite": "workspace:*",
+    "@vlcn.io/crsqlite-wasm": "workspace:*",
     "comlink": "^4.3.1",
     "nanoid": "^4.0.0",
     "ohm-js": "^16.4.0",

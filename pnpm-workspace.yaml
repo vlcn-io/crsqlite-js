@@ -1,0 +1,4 @@
+packages:
+  - "core"
+  - "py/correctness"
+  - "js/integration-check"

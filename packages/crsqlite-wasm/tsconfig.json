@@ -1,10 +1,10 @@
 {
-  "extends": "../../tsconfig-template.json",
+  "extends": "../tsconfig-template.json",
   "compilerOptions": {
     "outDir": "./dist/",
     "rootDir": "./src",
     "allowSyntheticDefaultImports": true
   },
   "include": ["./src/"],
-  "references": [{ "path": "../../xplat-api" }]
+  "references": [{ "path": "../xplat-api" }]
 }

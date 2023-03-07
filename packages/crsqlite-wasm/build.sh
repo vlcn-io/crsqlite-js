@@ -10,8 +10,8 @@ source ./emsdk_env.sh
 cd ../wa-sqlite
 make
 
-cp dist/wa-sqlite-async.wasm ../../js/browser/wa-crsqlite/dist
-cp dist/wa-sqlite-async.mjs ../../js/browser/wa-crsqlite/src
+cp dist/wa-sqlite-async.wasm ../../js/browser/wa-crsqlite/dist/crsqlite.wasm
+cp dist/wa-sqlite-async.mjs ../../js/browser/wa-crsqlite/src/crsqlite.mjs
 
 # make debug
 # cp debug/wa-sqlite-async.wasm ../../js/browser/wa-crsqlite/dist

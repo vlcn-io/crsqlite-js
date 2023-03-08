@@ -1,3 +1,5 @@
+#! /bin/bash
+
 mkdir -p packages/crsqlite-wasm/dist
 cd deps/emsdk
 ./emsdk install latest

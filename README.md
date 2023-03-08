@@ -4,6 +4,8 @@ JavaScript packages to use `cr-sqlite` in the browser, node, react and other JS 
 
 # Quickstart
 
+Scaffolding a new project -- todo: degit template
+
 ## Browser
 
 ```ts
@@ -66,12 +68,12 @@ const sync = await startSync(`ws://${window.location.hostname}:8080/sync`, {
 ## Storage
 
 - [crsqlite](https://github.com/vlcn-io/cr-sqlite): The cr-sqlite loadable extension for use in NodeJS/Deno/Bun. Can be used with the SQLite bindings you currently use.
-- [crsqlite-wasm](./packages/crsqlite-wasm/README.md): WASM build of CR-SQLite & SQLite for use in the browser
+- [crsqlite-wasm](./packages/crsqlite-wasm): WASM build of CR-SQLite & SQLite for use in the browser
 
 ## Sync
 
-- [client-websocket](./packages/client-websocket/README.md): Websocket client to sync the browser's database to a database hosted on a websocket server.
-- [server-websocket](./packages/server-websocket/README.md): Websocket server implementation.
+- [client-websocket](./packages/client-websocket): Websocket client to sync the browser's database to a database hosted on a websocket server.
+- [server-websocket](./packages/server-websocket): Websocket server implementation.
 - p2p: A peer to peer networking implementation, based on webrtc
 
 ## UI
@@ -82,7 +84,7 @@ const sync = await startSync(`ws://${window.location.hostname}:8080/sync`, {
 
 - [xplat-api](./packages/xplat-api): interfaces for components that can exist in NodeJS or the Browser.
 - [client-core](./packages/client-core): Networking code that is common across all client implementations
-- [client-server-common](./packages/client-server-common/README.md): Networking code that is common to the client and server
+- [client-server-common](./packages/client-server-common): Networking code that is common to the client and server
 - [server-core](./packages/server-core): Network code that is common across all server implementations
 - [node-allinone](./packages/node-allinone): convenience package for loading and using crsqlite in nodejs
   - Can also be used as a run time loadable extension in `nodejs` with whatever `sqlite` bindings you already use. See the `node-allinone` readme for more details

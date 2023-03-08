@@ -1,6 +1,6 @@
 # crsqlite-js
 
-JavaScript packages to use `cr-sqlite` in the browser, node, react and other JS frameworks & environments.
+JavaScript packages to use `cr-sqlite` in the browser, node, react and other JS frameworks & environments. Currently in the process of being moved out of https://github.com/vlcn-io/cr-sqlite/tree/main/js to here.
 
 # Quickstart
 

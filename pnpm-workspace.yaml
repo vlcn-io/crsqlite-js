@@ -16,4 +16,5 @@ packages:
   - "packages/server-websocket"
   - "packages/xplat-api"
   - "packages/xplat-tests"
+  - "packages/create-web"
   - "deps/wa-sqlite"

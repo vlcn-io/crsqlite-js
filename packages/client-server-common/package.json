@@ -21,7 +21,7 @@
     "watch": "tsc --build --watch",
     "deep-clean": "rm -rf ./dist || true && rm tsconfig.tsbuildinfo || true",
     "start": "pnpm build && node dist/main.js",
-    "test": "vitest --run"
+    "test": "vitest run"
   },
   "repository": {
     "type": "git",

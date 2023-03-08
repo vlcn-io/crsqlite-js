@@ -6,6 +6,9 @@
     "node": ">=19",
     "pnpm": ">=7"
   },
+  "devDependencies": {
+    "turbo": "^1.6.3"
+  },
   "scripts": {
     "build": "make all",
     "test": "pnpm turbo run test"

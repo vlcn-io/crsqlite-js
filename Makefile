@@ -25,6 +25,9 @@ $(wasm-file): $(git-deps)
 $(tsbuildinfo): $(wasm-file) FORCE
 	cd tsbuild-all && pnpm run build
 
+test: $(tsbuildinfo) $(wasm-file) FORCE
+	./test.sh
+
 FORCE:
 
-.PHONY: all
+.PHONY: all test

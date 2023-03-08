@@ -24,7 +24,8 @@
     "build": "tsc --build",
     "watch": "tsc --build --watch",
     "deep-clean": "rm -rf ./dist || true && rm tsconfig.tsbuildinfo || true",
-    "start": "pnpm build && node dist/bin/main.js"
+    "start": "pnpm build && node dist/bin/main.js",
+    "test": "vitest run"
   },
   "repository": {
     "type": "git",

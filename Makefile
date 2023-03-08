@@ -22,7 +22,9 @@ $(wasm-file): $(git-deps)
 	cp dist/wa-sqlite-async.wasm ../../packages/crsqlite-wasm/dist/crsqlite.wasm; \
 	cp dist/wa-sqlite-async.mjs ../../packages/crsqlite-wasm/src/crsqlite.mjs
 
-$(tsbuildinfo): $(wasm-file)
+$(tsbuildinfo): $(wasm-file) FORCE
 	cd tsbuild-all && pnpm run build
+
+FORCE:
 
 .PHONY: all

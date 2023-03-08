@@ -8,7 +8,7 @@
   ],
   "exports": {
     ".": "./dist/index.js",
-    "./wa-sqlite-async.wasm": "./dist/wa-sqlite-async.wasm"
+    "./crsqlite.wasm": "./dist/crsqlite.wasm"
   },
   "module": "dist/index.js",
   "types": "dist/index.d.ts",

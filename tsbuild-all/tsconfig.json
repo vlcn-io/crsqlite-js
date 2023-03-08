@@ -18,5 +18,6 @@
     { "path": "../packages/server-websocket" },
     { "path": "../packages/xplat-api" },
     { "path": "../packages/xplat-tests" },
+    { "path": "../packages/crsqlite-wasm"}
   ]
 }

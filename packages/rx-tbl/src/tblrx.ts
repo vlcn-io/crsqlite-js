@@ -25,6 +25,7 @@ export class TblRx {
   >();
   #rangeListeners = new Map<string, ((updates: UpdateType[]) => void)[]>();
   #arbitraryListeners = new Set<(updates: UpdateType[]) => void>();
+  __internalRawListener: (updates: [UpdateType, string, bigint][]) => void = () => {};
 
   // If a listener is subscribed to many events we'll collapse them into one
   // TODO: test that `onUpdate` is not spread across ticks of the event loop.
@@ -35,7 +36,7 @@ export class TblRx {
   constructor(private readonly db: DB | DBAsync) {
     this.#bc = new BroadcastChannel(db.siteid);
     this.#bc.onmessage = (msg) => {
-      this.#notifyListeners(msg.data);
+      this.__internalNotifyListeners(msg.data);
     };
 
     this.db.onUpdate((updateType, dbName, tblName, rowid) => {
@@ -47,7 +48,12 @@ export class TblRx {
     });
   }
 
-  #notifyListeners(data: [UpdateType, string, bigint][]) {
+  /**
+   * Exposed to one connection (e.g., connection in web-workers)
+   * to notify another connection about database changes.
+   */
+  __internalNotifyListeners(data: [UpdateType, string, bigint][]) {
+    this.__internalRawListener(data);
     // toNotify map exists to de-dupe listeners.
     // If you register for many events you'll only get called once even if many
     // of those events fire.
@@ -105,7 +111,7 @@ export class TblRx {
     queueMicrotask(() => {
       const data = this.#pendingNotification!;
       this.#pendingNotification = null;
-      this.#notifyListeners(data);
+      this.__internalNotifyListeners(data);
       this.#bc.postMessage(data);
     });
   }

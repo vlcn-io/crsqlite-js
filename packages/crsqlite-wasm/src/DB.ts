@@ -27,7 +27,7 @@ export class DB implements DBAsync {
   #closed = false;
   #tx: TX;
 
-  constructor(public api: SQLiteAPI, public db: number) {
+  constructor(public api: SQLiteAPI, public db: number, public readonly filename: string) {
     this.#tx = new TX(
       api,
       db,

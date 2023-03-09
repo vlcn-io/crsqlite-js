@@ -53,6 +53,7 @@ export interface TXAsync {
 
 export interface DBAsync extends TXAsync {
   readonly siteid: string;
+  readonly filename: string;
   close(): Promise<void>;
   onUpdate(
     cb: (

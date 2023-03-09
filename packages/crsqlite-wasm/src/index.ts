@@ -27,7 +27,7 @@ export class SQLite3 {
       },
       topLevelMutex
     ).then((db: any) => {
-      const ret = new DB(this.base, db);
+      const ret = new DB(this.base, db, filename || ":memory:");
       return ret.exec("PRAGMA cache_size=8000;").then(() => {
         return ret.execA("select quote(crsql_siteid());").then((siteid) => {
           ret._setSiteid(siteid[0][0].replace(/'|X/g, ""));

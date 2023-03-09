@@ -8,6 +8,9 @@
   ],
   "module": "dist/index.js",
   "main": "dist/index.js",
+  "exports": {
+    "./worker": "./dist/worker.js"
+  },
   "devDependencies": {
     "typescript": "^4.9.3",
     "vitest": "^0.25.0"

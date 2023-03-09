@@ -16,7 +16,6 @@ import {
 } from "@vlcn.io/client-server-common";
 import { DBAsync } from "@vlcn.io/xplat-api";
 import ChangeStream from "./changeStream.js";
-import { TblRx } from "@vlcn.io/rx-tbl";
 import logger from "./logger.js";
 
 export type ReplicatorArgs = {
@@ -35,7 +34,7 @@ export type ReplicatorArgs = {
    * for changes to our local database and ship
    * those changes off to the server.
    */
-  rx: TblRx;
+  rx: { onAny: (cb: () => void) => () => void };
   /**
    * Optional field. If filled in it should supply the schema name
    * for the server to use when auto-creating a database. The schema

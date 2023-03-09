@@ -4,7 +4,6 @@ import {
   Version,
 } from "@vlcn.io/client-server-common";
 import { DBAsync, Stmt, StmtAsync, TXAsync } from "@vlcn.io/xplat-api";
-import { TblRx } from "@vlcn.io/rx-tbl/src/tblrx";
 import logger from "./logger";
 
 export const RECEIVE = 0 as const;
@@ -21,7 +20,7 @@ export class DB {
   constructor(
     public readonly db: DBAsync,
     public readonly siteId: Uint8Array,
-    private readonly rx: TblRx,
+    private readonly rx: {onAny: (cb: () => void) => () => void;},
     private readonly pullChangesetStmt: Stmt | StmtAsync,
     private readonly applyChangesetStmt: Stmt | StmtAsync,
     private readonly updatePeerTrackerStmt: Stmt | StmtAsync
@@ -134,7 +133,7 @@ export class DB {
   }
 }
 
-export default async function wrap(db: DBAsync, rx: TblRx): Promise<DB> {
+export default async function wrap(db: DBAsync, rx: {onAny: (cb: () => void) => () => void;}): Promise<DB> {
   const [pullChangesetStmt, applyChangesetStmt, updatePeerTrackerStmt] =
     await Promise.all([
       db.prepare(

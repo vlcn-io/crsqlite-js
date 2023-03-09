@@ -9,8 +9,9 @@
   "bin": {
     "vlcn-websocket": "./dist/bin/main.js"
   },
-  "module": "dist/index.js",
-  "main": "dist/index.js",
+  "exports": {
+    ".": "./dist/index.js"
+  },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.2",
     "@types/express": "^4.17.14",

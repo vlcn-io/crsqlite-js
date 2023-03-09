@@ -106,7 +106,8 @@ export default class ChangeStream {
   }
 
   // TODO: make the throttle configurable
-  // TODO: go back to temp trigger model
+  // TODO: throttle should also drop messages if the current execution exceeds 50ms. 
+  // I.e., don't queue stuff up.
   // such that we do not perform a query in response to sync events.
   #localDbChanged = throttle(50, async () => {
     logger.info("received local db change event");

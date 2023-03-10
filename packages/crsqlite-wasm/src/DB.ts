@@ -72,6 +72,8 @@ export class DB implements DBAsync {
     return this.#tx.execO(sql, bind);
   }
 
+  // TODO: execOCached() -- which takes a table list
+
   /**
    * @returns returns an array for each row, e.g. `[ valA, valB, ... ]`
    */

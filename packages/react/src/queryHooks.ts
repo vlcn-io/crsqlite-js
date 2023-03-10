@@ -121,6 +121,10 @@ class AsyncResultStateMachine<T, M = readonly T[]> {
   private readonly disposedState;
   private fetchingState;
   private dbSubscriptionDisposer: (() => void) | null;
+  // So a query hook cannot overwhelm the DB, we fold all the queries
+  // down and only execute the last one.
+  private queuedFetch = false;
+  private queuedFetchRebind = false;
 
   constructor(
     private ctx: CtxAsync,
@@ -167,12 +171,13 @@ class AsyncResultStateMachine<T, M = readonly T[]> {
     }
     this.query = query;
     // cancel prep and fetch if in-flight
+    this.queuedFetch = this.queuedFetch || this.pendingFetchPromise != null;
     this.pendingPreparePromise = null;
     this.pendingFetchPromise = null;
     this.queriedTables = null;
     this.error = undefined;
     this.data = null;
-    this.getSnapshot(true);
+    this.pullData(true);
   };
 
   // TODO: warn the user if bindings change too much
@@ -192,10 +197,15 @@ class AsyncResultStateMachine<T, M = readonly T[]> {
     }
     this.bindings = bindings;
     // cancel fetch if in-flight. We do not need to re-prepare for binding changes.
+    this.queuedFetch = this.queuedFetch || this.pendingFetchPromise != null;
+    if (this.queuedFetch) {
+      this.queuedFetchRebind = true;
+    }
+
     this.pendingFetchPromise = null;
     this.error = undefined;
     this.data = null;
-    this.getSnapshot(true);
+    this.pullData(true);
   };
 
   // TODO: the change event should be forwarded too.
@@ -209,6 +219,7 @@ class AsyncResultStateMachine<T, M = readonly T[]> {
       return;
     }
 
+    this.queuedFetch = this.queuedFetch || this.pendingFetchPromise != null;
     this.pendingFetchPromise = null;
     this.error = undefined;
     if (this.data != null) {
@@ -218,7 +229,7 @@ class AsyncResultStateMachine<T, M = readonly T[]> {
       } as any;
     }
     this.data = null;
-    this.getSnapshot();
+    this.pullData(false);
   };
 
   /**
@@ -247,6 +258,21 @@ class AsyncResultStateMachine<T, M = readonly T[]> {
       return this.error;
     }
 
+    this.pullData(rebind);
+
+    log("fetching");
+    return this.fetchingState;
+  };
+
+  private pullData(rebind: boolean) {
+    if (this.disposed) {
+      return;
+    }
+
+    if (this.queuedFetch) {
+      return;
+    }
+
     if (this.pendingPreparePromise == null) {
       // start preparing the statement
       this.prepare();
@@ -255,10 +281,7 @@ class AsyncResultStateMachine<T, M = readonly T[]> {
       // start fetching the data
       this.fetch(rebind);
     }
-
-    log("fetching");
-    return this.fetchingState;
-  };
+  }
 
   private prepare() {
     log("hooks - Preparing");
@@ -316,6 +339,10 @@ class AsyncResultStateMachine<T, M = readonly T[]> {
     const fetchInternal = () => {
       log("hooks - Fetching (internal)");
       if (fetchPromise != null && this.pendingFetchPromise !== fetchPromise) {
+        if (this.queuedFetch) {
+          this.queuedFetch = false;
+          this.pullData(false);
+        }
         return;
       }
       const stmt = this.stmt;
@@ -323,8 +350,9 @@ class AsyncResultStateMachine<T, M = readonly T[]> {
         return;
       }
 
-      if (rebind) {
+      if (rebind || this.queuedFetchRebind) {
         stmt.bind(this.bindings || []);
+        this.queuedFetchRebind = false;
       }
 
       const doFetch = (releaser: () => void, tx: TXAsync) => {
@@ -336,7 +364,6 @@ class AsyncResultStateMachine<T, M = readonly T[]> {
               if (pendingQuery === myQueryId) {
                 pendingQuery = null;
                 txAcquisition = null;
-                console.log("release ", queryTxHolder);
                 tx.exec("RELEASE use_query_" + queryTxHolder).then(
                   releaser,
                   releaser
@@ -344,6 +371,10 @@ class AsyncResultStateMachine<T, M = readonly T[]> {
               }
 
               if (this.pendingFetchPromise !== fetchPromise) {
+                this.queuedFetch = false;
+                if (this.pendingFetchPromise == null) {
+                  this.pullData(false);
+                }
                 return;
               }
 
@@ -352,8 +383,14 @@ class AsyncResultStateMachine<T, M = readonly T[]> {
                 data: (this.postProcess ? this.postProcess(data) : data) as any,
                 error: undefined,
               };
+              this.pendingFetchPromise = null;
 
-              this.reactInternals && this.reactInternals();
+              if (this.queuedFetch) {
+                this.queuedFetch = false;
+                this.pullData(false);
+              } else {
+                this.reactInternals && this.reactInternals();
+              }
             },
             (error: Error) => {
               if (pendingQuery === myQueryId) {
@@ -370,7 +407,13 @@ class AsyncResultStateMachine<T, M = readonly T[]> {
                     : EMPTY_ARRAY) as any),
                 error,
               };
-              this.reactInternals && this.reactInternals!();
+              this.pendingFetchPromise = null;
+              if (this.queuedFetch) {
+                this.queuedFetch = false;
+                this.pullData(false);
+              } else {
+                this.reactInternals && this.reactInternals!();
+              }
             }
           );
       };
@@ -381,7 +424,6 @@ class AsyncResultStateMachine<T, M = readonly T[]> {
       if (prevPending == null) {
         queryTxHolder = myQueryId;
         // start tx
-        console.log("acquire ", queryTxHolder);
         txAcquisition = this.ctx.db.imperativeTx().then((relAndTx) => {
           relAndTx[1].exec("SAVEPOINT use_query_" + queryTxHolder);
           return relAndTx;

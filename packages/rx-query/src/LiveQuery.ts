@@ -1,13 +1,20 @@
-import { useEffect, useRef, useSyncExternalStore } from "react";
 import {
   DBAsync,
   StmtAsync,
-  UPDATE_TYPE,
-  UpdateType,
   TXAsync,
 } from "@vlcn.io/xplat-api";
-import { CtxAsync } from "./context.js";
-import { RowID } from "./rowid.js";
+import RxDB from "./RxDB.js";
+
+// Globally pending live queries.
+// This is used for when _many_ live queries attempt to fetch at the same time.
+// When this happens, we collect them all into the same read transaction
+// as this is wayyy more performant than issuing independent read transactions.
+let pendingQuery: number | null = null;
+let queryTxHolder: number | null = null;
+let queryId = 0;
+let txAcquisition: Promise<[() => void, TXAsync]> | null = null;
+
+const log = (...args: any) => {};
 
 export type QueryData<T> = {
   readonly loading: boolean;
@@ -17,122 +24,83 @@ export type QueryData<T> = {
 
 const EMPTY_ARRAY: readonly any[] = Object.freeze([]);
 
-// TODO: two useQuery variants?
-// one for async db and one for sync db?
-
-// const log = console.log.bind(console);
-const log = (...args: any) => {};
-
-export type SQL<R> = string;
-
-const allUpdateTypes = [
-  UPDATE_TYPE.INSERT,
-  UPDATE_TYPE.UPDATE,
-  UPDATE_TYPE.DELETE,
-];
-
-export function usePointQuery<R, M = R>(
-  ctx: CtxAsync,
-  _rowid_: RowID<R>,
-  query: SQL<R>,
-  bindings?: any[],
-  postProcess?: (rows: R[]) => M
-): QueryData<M> {
-  return useQuery(
-    ctx,
-    query,
-    bindings,
-    postProcess,
-    [UPDATE_TYPE.UPDATE, UPDATE_TYPE.DELETE],
-    _rowid_
-  );
-}
-
-export function useRangeQuery<R, M = R[]>(
-  ctx: CtxAsync,
-  query: SQL<R>,
-  bindings?: any[],
-  postProcess?: (rows: R[]) => M
-) {
-  return useQuery(ctx, query, bindings, postProcess, [
-    UPDATE_TYPE.INSERT,
-    UPDATE_TYPE.DELETE,
-  ]);
-}
-
-export function useQuery<R, M = R[]>(
-  ctx: CtxAsync,
-  query: SQL<R>,
-  bindings?: any[],
-  postProcess?: (rows: R[]) => M,
-  updateTypes: UpdateType[] = allUpdateTypes,
-  _rowid_?: RowID<R>
-): QueryData<M> {
-  const stateMachine = useRef<AsyncResultStateMachine<R, M> | null>(null);
-  if (stateMachine.current == null) {
-    stateMachine.current = new AsyncResultStateMachine(
-      ctx,
-      query,
-      bindings,
-      postProcess,
-      updateTypes,
-      _rowid_
-    );
-  }
-
-  useEffect(
-    () => () => {
-      stateMachine.current?.dispose();
-    },
-    []
-  );
-  useEffect(
-    () => {
-      stateMachine.current?.respondToBindingsChange(bindings || EMPTY_ARRAY);
-    },
-    _rowid_ == null
-      ? bindings || EMPTY_ARRAY
-      : [...(bindings || EMPTY_ARRAY), _rowid_]
-  );
-  useEffect(() => {
-    stateMachine.current?.respondToQueryChange(query);
-  }, [query]);
-
-  return useSyncExternalStore<QueryData<M>>(
-    stateMachine.current.subscribeReactInternals,
-    stateMachine.current.getSnapshot
-  );
-}
-
-let pendingQuery: number | null = null;
-let queryTxHolder: number | null = null;
-let queryId = 0;
-let txAcquisition: Promise<[() => void, TXAsync]> | null = null;
-
-class AsyncResultStateMachine<T, M = readonly T[]> {
+/**
+ * Represents a query that can be subscribed to.
+ * 
+ * For convenience, supports updating the bind params and query string.
+ * 
+ * Bind params makes sense.. but why query string? Lengthy explination
+ */
+export default class LiveQuery<T, M = readonly T[]> {
+  /**
+   * Currently in-flight fetch if there is one.
+   */
   private pendingFetchPromise: Promise<any> | null = null;
+  /**
+   * Currently in-flight statement preparation if there is one.
+   * Pending fetches are chained after pending prepares given the statement must be 
+   * prepared before it can be fetched.
+   */
   private pendingPreparePromise: Promise<StmtAsync | null> | null = null;
+  /**
+   * The statement to run.
+   */
   private stmt: StmtAsync | null = null;
-  private queriedTables: string[] | null = null;
+  /**
+   * The tables that are being queried by the statement. Resolves through views.
+   */
+  public queriedTables: string[] | null = null;
+  /**
+   * The currently cached set of data returned by this live query.
+   */
   private data: QueryData<M> | null = null;
+  /**
+   * The subscriber to this live query.
+   */
   private reactInternals: null | (() => void) = null;
+  /**
+   * Cached error case if one exists
+   */
   private error?: QueryData<M>;
+  /**
+   * If this live query has been disposed. We save this state so we can
+   * properly shut down in-flight requests when they complete.
+   */
   private disposed: boolean = false;
+  /**
+   * Cached state for when the live query is disposed.
+   */
   private readonly disposedState;
+  /**
+   * Cached state for when the live query is fetching.
+   */
   private fetchingState;
+  /**
+   * Unsubscribe the live query from the database so we stop receiving
+   * updates.
+   */
   private dbSubscriptionDisposer: (() => void) | null;
-  // So a query hook cannot overwhelm the DB, we fold all the queries
-  // down and only execute the last one.
+  /**
+   * If the live query wanted to update itself while it was already fetching
+   * then this will be true. Once the in-flight fetch completes a new fetch
+   * will be initiated and `queuedFetch` will be false.
+   * 
+   * This mechanisms prevents any backing up of live queries.
+   * 
+   * If a live query is invoked a million times while it is still
+   * fetching, those will all get folded into a single fetch.
+   */
   private queuedFetch = false;
+  /**
+   * If the queued fetch needs to update bind parameters
+   */
   private queuedFetchRebind = false;
 
   constructor(
-    private ctx: CtxAsync,
-    private query: string,
-    private bindings: readonly any[] | undefined,
+    private db: RxDB,
+    public query: string,
+    public bindings: readonly any[] | undefined,
     private postProcess?: (rows: T[]) => M,
-    private updateTypes: UpdateType[] = allUpdateTypes,
-    private _rowid_?: bigint
   ) {
     this.dbSubscriptionDisposer = null;
     this.disposedState = {
@@ -149,12 +117,16 @@ class AsyncResultStateMachine<T, M = readonly T[]> {
     };
   }
 
+  /**
+   * Subscribe someone to this live query.
+   * Currently we only support 1 subscriber to a live query.
+   */
   subscribeReactInternals = (internals: () => void): (() => void) => {
     this.reactInternals = internals;
-    return this.disposeDbSubscription;
+    return this.#disposeDbSubscription;
   };
 
-  disposeDbSubscription = () => {
+  #disposeDbSubscription = () => {
     if (this.dbSubscriptionDisposer) {
       this.dbSubscriptionDisposer();
       this.dbSubscriptionDisposer = null;
@@ -210,12 +182,8 @@ class AsyncResultStateMachine<T, M = readonly T[]> {
 
   // TODO: the change event should be forwarded too.
   // So we can subscribe to adds vs deletes vs updates vs all
-  private respondToDatabaseChange = (updates: UpdateType[]) => {
+  public processWrite = () => {
     if (this.disposed) {
-      return;
-    }
-
-    if (!updates.some((u) => this.updateTypes.includes(u))) {
       return;
     }
 
@@ -304,22 +272,15 @@ class AsyncResultStateMachine<T, M = readonly T[]> {
 
         this.stmt = stmt;
         this.queriedTables = queriedTables;
-        this.disposeDbSubscription();
-        if (this._rowid_ != null) {
-          if (this.queriedTables.length > 1) {
-            console.warn("usePointQuery should only be used on a single table");
-          }
-          this.dbSubscriptionDisposer = this.ctx.rx.onPoint(
-            this.queriedTables[0],
-            this._rowid_,
-            this.respondToDatabaseChange
-          );
-        } else {
-          this.dbSubscriptionDisposer = this.ctx.rx.onRange(
-            queriedTables,
-            this.respondToDatabaseChange
-          );
-        }
+        this.#disposeDbSubscription();
+
+        this.dbSubscriptionDisposer = this.db.trackLiveQuery(this);
+        // TODO: here we need to subscribe to rxdb.
+        // Pass it our tables used and our query
+        // then it can call us to tell us to:
+        // 1. re-query
+        // 2. apply the change to our local cache of the data
+
         return stmt;
       }
     );
@@ -424,7 +385,7 @@ class AsyncResultStateMachine<T, M = readonly T[]> {
       if (prevPending == null) {
         queryTxHolder = myQueryId;
         // start tx
-        txAcquisition = this.ctx.db.imperativeTx().then((relAndTx) => {
+        txAcquisition = this.db.imperativeTx().then((relAndTx) => {
           relAndTx[1].exec("SAVEPOINT use_query_" + queryTxHolder);
           return relAndTx;
         });
@@ -455,8 +416,8 @@ class AsyncResultStateMachine<T, M = readonly T[]> {
 
   private prepareAndGetUsedTables(): Promise<[StmtAsync, string[]]> {
     return Promise.all([
-      this.ctx.db.prepare(this.query),
-      usedTables(this.ctx.db, this.query),
+      this.db.prepare(this.query),
+      usedTables(this.db, this.query),
     ]);
   }
 
@@ -464,7 +425,7 @@ class AsyncResultStateMachine<T, M = readonly T[]> {
     this.disposed = true;
     this.stmt?.finalize(null);
     this.stmt = null;
-    this.disposeDbSubscription();
+    this.#disposeDbSubscription();
   }
 }
 
@@ -479,24 +440,4 @@ function usedTables(db: DBAsync, query: string): Promise<string[]> {
     .then((rows) => {
       return rows.map((r) => r[0]);
     });
-}
-
-export function first<T>(data: T[]): T | undefined {
-  if (!data) {
-    return undefined;
-  }
-  return data[0];
-}
-
-export function firstPick<T>(data: any[]): T | undefined {
-  const d = data[0];
-  if (d == null) {
-    return undefined;
-  }
-
-  return d[Object.keys(d)[0]];
-}
-
-export function pick<T extends any, R>(data: T[]): R[] {
-  return data.map((d: any) => d[Object.keys(d)[0] as any]);
 }

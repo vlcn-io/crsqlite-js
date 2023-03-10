@@ -41,6 +41,7 @@ export function serialize(
   log("Enqueueing query ", key);
 
   const res = mutex.runExclusive(cb);
+  // console.log('Running ', key);
 
   if (key) {
     cache?.set(key, res);

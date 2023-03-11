@@ -65,6 +65,8 @@ export default class RxDB implements DBAsync {
     // 2. extract constraints (where conditions)
     // 3. check if any tracked query is affected
     // 4. if so, emit update
+    //
+    
   }
 
   // we need to modify exec statements to catch mutations

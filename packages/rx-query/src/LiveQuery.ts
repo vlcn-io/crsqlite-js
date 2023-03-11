@@ -1,8 +1,4 @@
-import {
-  DBAsync,
-  StmtAsync,
-  TXAsync,
-} from "@vlcn.io/xplat-api";
+import { DBAsync, StmtAsync, TXAsync } from "@vlcn.io/xplat-api";
 import RxDB from "./RxDB.js";
 
 // Globally pending live queries.
@@ -26,9 +22,9 @@ const EMPTY_ARRAY: readonly any[] = Object.freeze([]);
 
 /**
  * Represents a query that can be subscribed to.
- * 
+ *
  * For convenience, supports updating the bind params and query string.
- * 
+ *
  * Bind params makes sense.. but why query string? Lengthy explination
  */
 export default class LiveQuery<T, M = readonly T[]> {
@@ -38,7 +34,7 @@ export default class LiveQuery<T, M = readonly T[]> {
   private pendingFetchPromise: Promise<any> | null = null;
   /**
    * Currently in-flight statement preparation if there is one.
-   * Pending fetches are chained after pending prepares given the statement must be 
+   * Pending fetches are chained after pending prepares given the statement must be
    * prepared before it can be fetched.
    */
   private pendingPreparePromise: Promise<StmtAsync | null> | null = null;
@@ -84,9 +80,9 @@ export default class LiveQuery<T, M = readonly T[]> {
    * If the live query wanted to update itself while it was already fetching
    * then this will be true. Once the in-flight fetch completes a new fetch
    * will be initiated and `queuedFetch` will be false.
-   * 
+   *
    * This mechanisms prevents any backing up of live queries.
-   * 
+   *
    * If a live query is invoked a million times while it is still
    * fetching, those will all get folded into a single fetch.
    */
@@ -100,7 +96,7 @@ export default class LiveQuery<T, M = readonly T[]> {
     private db: RxDB,
     public query: string,
     public bindings: readonly any[] | undefined,
-    private postProcess?: (rows: T[]) => M,
+    private postProcess?: (rows: T[]) => M
   ) {
     this.dbSubscriptionDisposer = null;
     this.disposedState = {
@@ -274,7 +270,10 @@ export default class LiveQuery<T, M = readonly T[]> {
         this.queriedTables = queriedTables;
         this.#disposeDbSubscription();
 
-        this.dbSubscriptionDisposer = this.db.trackLiveQuery(this);
+        this.dbSubscriptionDisposer = this.db.trackLiveQuery(
+          this,
+          queriedTables
+        );
         // TODO: here we need to subscribe to rxdb.
         // Pass it our tables used and our query
         // then it can call us to tell us to:

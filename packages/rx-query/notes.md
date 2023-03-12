@@ -126,6 +126,15 @@ If query hits on insert, add to query cache for that query.
 If query hits on update, add/update query cache for that query.
 If did hit on delete, remove from query cache for that query.
 
+Inserts will need to try to hydrate against the join relation.
+They can try to join against all things inserted in that tx.
+
+- So we add the rows to the base cached relations
+- Then we go to the join relations and try to construct the rows
+there.
+- Then we go to queries we have against those relations and run them
+against the newly inserted row to check for a match.
+ ^-- which queries can we not run in-mem? No sub-selects.
 
 
 many row targeting mutations:
@@ -146,3 +155,21 @@ if a constrained column is being modified, re-run the query.
 Re-writing selects...
 - Pull rowids
 - if joins, pull all rowids & make a new relation in cache if one does not exist
+
+---
+
+aggregations -- revert the old row value, apply the new row value.
+
+---
+
+Map your SQL to simpler graph expressions?
+
+
+---
+
+Range table indexing of queries?
+
+someone issues a query, we pull constraints and create
+a range in the range tree for each constraint against an indexed
+column...
+

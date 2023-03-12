@@ -9,6 +9,7 @@
     { "path": "../client-core" },
     { "path": "../client-server-common" },
     { "path": "../xplat-api" },
-    { "path": "../rx-tbl" }
+    { "path": "../rx-tbl" },
+    { "path": "../crsqlite-wasm" }
   ]
 }

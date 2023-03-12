@@ -5,22 +5,24 @@ import {
 } from "@vlcn.io/client-core";
 import { DBChange, Init, Msg } from "./messageTypes.js";
 import WebSocketWrapper from "./WebSocketWrapper.js";
-import sqliteWasm, { SQLite3 } from '@vlcn.io/crsqlite-wasm';
+import sqliteWasm from "@vlcn.io/crsqlite-wasm";
 import tblrx from "@vlcn.io/rx-tbl";
 
 // @ts-ignore
-import wasmUrl from '@vlcn.io/wa-crsqlite/crsqlite.wasm?url';
+import wasmUrl from "@vlcn.io/wa-crsqlite/crsqlite.wasm?url";
 
 class FakeRx {
-  private callbacks: Set<(() => void)> = new Set();
+  private callbacks: Set<() => void> = new Set();
 
   onAny(cb: () => void) {
     this.callbacks.add(cb);
-    return () => {this.callbacks.delete(cb);};
+    return () => {
+      this.callbacks.delete(cb);
+    };
   }
 
   notify() {
-    this.callbacks.forEach(cb => cb());
+    this.callbacks.forEach((cb) => cb());
   }
 }
 
@@ -57,12 +59,12 @@ class Syncer {
     });
     const wrapper = new WebSocketWrapper(msg.uri, replicator, msg.accessToken);
     wrapper.start();
-    
+
     this.realRx.__internalRawListener = (collectedChanges) => {
       const msg: DBChange = {
         _tag: "db_change",
         collectedChanges,
-      }
+      };
       self.postMessage(msg);
     };
   }

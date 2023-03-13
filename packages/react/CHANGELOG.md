@@ -1,5 +1,17 @@
 # @vlcn.io/react
 
+## 0.9.0-next.0
+
+### Minor Changes
+
+- useQuery perf updates, primary key only table fixes, sync in a background worker
+
+### Patch Changes
+
+- Updated dependencies
+  - @vlcn.io/rx-tbl@0.8.0-next.0
+  - @vlcn.io/xplat-api@0.8.0-next.0
+
 ## 0.8.0
 
 ### Minor Changes

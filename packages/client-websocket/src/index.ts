@@ -13,20 +13,28 @@ type Overwrite<T, U> = Pick<T, Exclude<keyof T, keyof U>> & U;
 
 export default async function startSyncWith(
   uri: string,
-  args: Overwrite<ReplicatorArgs, {remoteDbId: Uint8Array | string, rx: TblRx}> & {worker?: boolean}
-): Promise<{stop: () => void}> {
+  args: Overwrite<
+    ReplicatorArgs,
+    { remoteDbId: Uint8Array | string; rx: TblRx }
+  > & { worker?: boolean }
+): Promise<{ stop: () => void }> {
   const parsedArgs = {
     ...args,
-    remoteDbId: typeof args.remoteDbId == 'string' ? uuidStrToBytes(args.remoteDbId) : args.remoteDbId,
-  }
+    remoteDbId:
+      typeof args.remoteDbId == "string"
+        ? uuidStrToBytes(args.remoteDbId)
+        : args.remoteDbId,
+  };
 
   // worker must explicitly be false to disable
-  if (args.worker !== false) { 
+  if (args.worker !== false) {
     if (args.localDb.filename === ":memory:") {
-      throw new Error('In-memory databases cannot be accessed from a web-worker and must be synced in the main thread. Set worker: false in the replicator args');
+      throw new Error(
+        "In-memory databases cannot be accessed from a web-worker and must be synced in the main thread. Set worker: false in the replicator args"
+      );
     }
     return startSyncInWorker(uri, parsedArgs);
-  } 
+  }
 
   const replicator = await createReplicator(parsedArgs);
   const wrapper = new WebSocketWrapper(uri, replicator, args.accessToken);
@@ -36,18 +44,18 @@ export default async function startSyncWith(
 
 function startSyncInWorker(
   uri: string,
-  args: Overwrite<ReplicatorArgs, {rx: TblRx}>
+  args: Overwrite<ReplicatorArgs, { rx: TblRx }>
 ) {
   const disposables: (() => void)[] = [];
 
-  const worker = new Worker(new URL('./worker.js', import.meta.url), {
-    type: 'module',
-  })
+  const worker = new Worker(new URL("./worker.js", import.meta.url), {
+    type: "module",
+  });
 
   const dbname = args.localDb.filename;
 
   const initMsg: Init = {
-    _tag: 'init',
+    _tag: "init",
     uri,
     dbname,
     remoteDbId: args.remoteDbId,
@@ -70,20 +78,25 @@ function startSyncInWorker(
     }
   };
 
-  disposables.push(args.rx.onAny(() => {
-    // ignore changes coming from the sync layer itself?
-    if (ignoreNotif) {
-      return;
-    }
+  disposables.push(
+    args.rx.onAny(() => {
+      // ignore changes coming from the sync layer itself?
+      if (ignoreNotif) {
+        console.log("ignoring changes from sync layer itself");
+        return;
+      }
 
-    // request a sync otherwise
-    const msg: RequestSync = { _tag: "request_sync" };
-    worker.postMessage(msg);
-  }));
+      // request a sync otherwise
+      const msg: RequestSync = { _tag: "request_sync" };
+      worker.postMessage(msg);
+    })
+  );
 
-  return {stop: () => {
-    // Is this good enough?
-    disposables.forEach((d) => d());
-    worker.terminate();
-  }};
+  return {
+    stop: () => {
+      // Is this good enough?
+      disposables.forEach((d) => d());
+      worker.terminate();
+    },
+  };
 }

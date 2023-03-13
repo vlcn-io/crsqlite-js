@@ -9,7 +9,7 @@ import sqliteWasm from "@vlcn.io/crsqlite-wasm";
 import tblrx from "@vlcn.io/rx-tbl";
 
 // @ts-ignore
-import wasmUrl from "@vlcn.io/wa-crsqlite/crsqlite.wasm?url";
+import wasmUrl from "@vlcn.io/crsqlite-wasm/crsqlite.wasm?url";
 
 class FakeRx {
   private callbacks: Set<() => void> = new Set();
@@ -61,6 +61,7 @@ class Syncer {
     wrapper.start();
 
     this.realRx.__internalRawListener = (collectedChanges) => {
+      console.log(collectedChanges);
       const msg: DBChange = {
         _tag: "db_change",
         collectedChanges,

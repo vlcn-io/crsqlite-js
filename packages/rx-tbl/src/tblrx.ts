@@ -25,7 +25,8 @@ export class TblRx {
   >();
   #rangeListeners = new Map<string, ((updates: UpdateType[]) => void)[]>();
   #arbitraryListeners = new Set<(updates: UpdateType[]) => void>();
-  __internalRawListener: (updates: [UpdateType, string, bigint][]) => void = () => {};
+  __internalRawListener: (updates: [UpdateType, string, bigint][]) => void =
+    () => {};
 
   // If a listener is subscribed to many events we'll collapse them into one
   // TODO: test that `onUpdate` is not spread across ticks of the event loop.
@@ -108,12 +109,12 @@ export class TblRx {
 
     this.#pendingNotification = [];
     this.#pendingNotification.push([updateType, tbl, rowid]);
-    queueMicrotask(() => {
+    setTimeout(() => {
       const data = this.#pendingNotification!;
       this.#pendingNotification = null;
       this.__internalNotifyListeners(data);
       this.#bc.postMessage(data);
-    });
+    }, 0);
   }
 
   onRange(tables: string[], cb: (updates: UpdateType[]) => void) {

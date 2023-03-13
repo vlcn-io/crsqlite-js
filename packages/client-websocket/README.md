@@ -2,9 +2,11 @@
 
 ```ts
 import startSync from "@vlcn.io/client-websocket";
-import { DB, SQLite3 } from "@vlcn.io/crsqlite-wasm";
+import initWasm from "@vlcn.io/crsqlite-wasm";
+import wasmUrl from "@vlcn.io/crsqlite-wasm/crsqlite.wasm?url";
 import tblrx from "@vlcn.io/rx-tbl";
 
+const sqlite = await initWasm((_file) => wasmUrl);
 const db = await sqlite.open(dbid);
 const rx = tblrx(db);
 

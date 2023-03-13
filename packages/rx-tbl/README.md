@@ -4,7 +4,7 @@ Simple "table based" reactivity.
 
 I.e., get notified whenever a table has rows inserted/deleted/updated.
 
-Future `rx` packages will improve this to bring ractivity to the query level. I.e., only react when the dependencies of a query have changed.
+Future `rx` packages will improve this to bring ractivity to the query level. I.e., only react when the specific rows used by a query have changed.
 
 # Usage:
 

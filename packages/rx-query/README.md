@@ -1,6 +1,6 @@
 # @vlcn.io/rx-query
 
-More efficient query based reactivity.
+WIP - more efficient query based reactivity.
 
 `rx-tbl` would re-run all queries that hit a given table when a write hit that table. This is problematic for apps with hundreds of queries against the same table.
 

@@ -1,12 +1,14 @@
 # @vlcn.io/crsqlite-wasm
 
+**Note:** This package is currently published in `@vlcn.io/wa-crsqlite`
+
 WASM build of `sqlite` that can:
 
 - run without COEP headers
 - run in SharedWorkers
 - run concurrently in many tabs
-
-and includes the `crsqlite` extension.
+- run in the UI thread if desired
+- includes the `crsqlite` extension.
 
 Builds upon https://github.com/rhashimoto/wa-sqlite/. The only delta is that we add our extension at build time and expose a few extra sqlite methods.
 

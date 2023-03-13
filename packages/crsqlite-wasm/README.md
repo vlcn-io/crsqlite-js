@@ -1,7 +1,5 @@
 # @vlcn.io/crsqlite-wasm
 
-**Note:** This package is currently published in `@vlcn.io/wa-crsqlite`
-
 WASM build of `sqlite` that can:
 
 - run without COEP headers

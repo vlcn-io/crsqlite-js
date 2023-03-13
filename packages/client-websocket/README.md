@@ -2,7 +2,7 @@
 
 ```ts
 import startSync from "@vlcn.io/client-websocket";
-import { DB, SQLite3 } from "@vlcn.io/wa-crsqlite";
+import { DB, SQLite3 } from "@vlcn.io/crsqlite-wasm";
 import tblrx from "@vlcn.io/rx-tbl";
 
 const db = await sqlite.open(dbid);

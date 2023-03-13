@@ -74,7 +74,7 @@ const sync = await startSync(`ws://${window.location.hostname}:8080/sync`, {
 ## Storage
 
 - [crsqlite](https://github.com/vlcn-io/cr-sqlite): The cr-sqlite loadable extension for use in NodeJS/Deno/Bun. Can be used with the SQLite bindings you currently use.
-- [crsqlite-wasm](./packages/crsqlite-wasm): WASM build of CR-SQLite & SQLite for use in the browser
+- [crsqlite-wasm](./packages/crsqlite-wasm): WASM build of CR-SQLite & SQLite for use in the browser. **NOTE: this is currently published as `wa-crsqlite`!**
 
 ## Sync
 

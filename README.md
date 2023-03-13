@@ -1,6 +1,6 @@
 # crsqlite-js
 
-JavaScript packages to use `cr-sqlite` in the browser, node, react and other JS frameworks & environments. Currently in the process of being moved out of https://github.com/vlcn-io/cr-sqlite/tree/main/js to here.
+JavaScript packages to use `cr-sqlite` in the browser, node, react and other JS frameworks & environments.
 
 # Quickstart
 
@@ -14,9 +14,10 @@ Example apps to look at until then:
 ## Browser
 
 ```ts
-import initWasm from '@vlcn.io/crsqlite-wasm';
+import initWasm from "@vlcn.io/wa-crsqlite";
+import wasmUrl from "@vlcn.io/wa-crsqlite/wa-sqlite-async.wasm?url";
 
-const crsqlite = await initWasm('@vlcn.io/crsqlite-wasm/dist/crsqlite.wasm');
+const crsqlite = await initWasm(wasmUrl);
 const db = await sqlite.open("db-name");
 
 ...
@@ -73,7 +74,7 @@ const sync = await startSync(`ws://${window.location.hostname}:8080/sync`, {
 ## Storage
 
 - [crsqlite](https://github.com/vlcn-io/cr-sqlite): The cr-sqlite loadable extension for use in NodeJS/Deno/Bun. Can be used with the SQLite bindings you currently use.
-- [crsqlite-wasm](./packages/crsqlite-wasm): WASM build of CR-SQLite & SQLite for use in the browser
+- [crsqlite-wasm](./packages/crsqlite-wasm): WASM build of CR-SQLite & SQLite for use in the browser. **NOTE: this is currently published as `wa-crsqlite`!**
 
 ## Sync
 

@@ -14,9 +14,10 @@ Example apps to look at until then:
 ## Browser
 
 ```ts
-import initWasm from '@vlcn.io/crsqlite-wasm';
+import initWasm from "@vlcn.io/wa-crsqlite";
+import wasmUrl from "@vlcn.io/wa-crsqlite/wa-sqlite-async.wasm?url";
 
-const crsqlite = await initWasm('@vlcn.io/crsqlite-wasm/dist/crsqlite.wasm');
+const crsqlite = await initWasm(wasmUrl);
 const db = await sqlite.open("db-name");
 
 ...

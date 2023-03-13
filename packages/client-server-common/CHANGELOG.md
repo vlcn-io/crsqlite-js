@@ -1,5 +1,11 @@
 # @vlcn.io/client-server-common
 
+## 0.5.0
+
+### Minor Changes
+
+- 14c9f4e: useQuery perf updates, primary key only table fixes, sync in a background worker
+
 ## 0.5.0-next.0
 
 ### Minor Changes

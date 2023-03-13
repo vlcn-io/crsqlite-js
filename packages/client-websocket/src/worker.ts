@@ -1,8 +1,6 @@
 // Worker to do syncing off of the main thread
-import {
-  ReplicatorArgs,
-  default as createReplicator,
-} from "@vlcn.io/client-core";
+import "./shim.js";
+import { default as createReplicator } from "@vlcn.io/client-core";
 import { DBChange, Init, Msg } from "./messageTypes.js";
 import WebSocketWrapper from "./WebSocketWrapper.js";
 import sqliteWasm from "@vlcn.io/crsqlite-wasm";

@@ -1,5 +1,11 @@
 # @vlcn.io/xplat-api
 
+## 0.8.0
+
+### Minor Changes
+
+- 14c9f4e: useQuery perf updates, primary key only table fixes, sync in a background worker
+
 ## 0.8.0-next.0
 
 ### Minor Changes
